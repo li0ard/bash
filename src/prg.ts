@@ -2,6 +2,7 @@ import { BASH_PRG_KEY, BASH_PRG_NULL, BASH_PRG_DATA, BASH_PRG_OUT, BASH_PRG_TEXT
 import { BASHF } from "./index";
 import { concatBytes, equalBytes, xor } from "./utils";
 
+/** Programmable automaton (`bash-prg`) */
 export class BashPrg {
     private l: number;
     private d: number;
@@ -9,6 +10,7 @@ export class BashPrg {
     private buf_len: number;
     private pos: number;
 
+    /** Programmable automaton (`bash-prg`) */
     constructor() {
         this.s = new Uint8Array(192);
         this.l = 0;
