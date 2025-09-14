@@ -1,0 +1,98 @@
+import { describe, test, expect } from "bun:test";
+import { hexToBytes } from "../src/utils";
+import { BashPrg, prgAeDecrypt, prgAeEncrypt, prgHash } from "../src";
+
+test("PRG", () => {
+    const K = hexToBytes("B194BAC80A08F53B366D008E584A5DE48504FA9D1BB6C7AC252E72C202FDCE0D");
+    const I = hexToBytes("5BE3D61217B96181FE6786AD716B890B5CB0C0FF33C356B835C405AED8E07F99E12BDC1AE28257EC703FCCF095EE8DF1C1AB76389FE678CAF7C6F860D5BB9C4FF33C657B637C306ADD4EA7799EB23D313E98B56E27D3BCCF591E181F4C5AB7");
+    const A1 = hexToBytes("E9DEE72C8F0C0FA62DDB49F46F739647");
+    const A2 = hexToBytes("06075316");
+    const X = hexToBytes("92BD9B1CE5D141015445FBC95E4D0EF2682080AA227D64");
+    const expectedK1 = hexToBytes("71CC358A0D5082173DE04803F7E905CB");
+    const expectedY1 = hexToBytes("51ED3B28D345FFD1AD22815B86ECC17C278C8FE8920214");
+    const expectedY2 = hexToBytes("28FE0998BFC010F13B260685A27AFB36CCF580F753521B");
+
+    const alpha = new BashPrg();
+    const beta = new BashPrg();
+
+    alpha.start(256, 2, new Uint8Array(0), K);
+    alpha.absorb(I);
+    alpha.ratchet();
+    
+    const K1 = alpha.squeeze(16);
+    beta.start(128, 1, A1, K1);
+    const gamma = beta.clone();
+    gamma.restart(A2, new Uint8Array(0));
+
+    expect(K1).toStrictEqual(expectedK1)
+    expect(beta.encrypt(X)).toStrictEqual(expectedY1)
+    expect(gamma.encrypt(X)).toStrictEqual(expectedY2)
+})
+
+test("PRG-AE", () => {
+    const A = hexToBytes("B194BAC80A08F53B366D008E584A5DE4");
+    const K = hexToBytes("5BE3D61217B96181FE6786AD716B890B5CB0C0FF33C356B835C405AED8E07F99")
+    const X = new Uint8Array(192);
+    const I = hexToBytes("E12BDC1AE28257EC703FCCF095EE8DF1C1AB76389FE678CAF7C6F860D5BB9C4FF33C657B637C306ADD4EA7799EB23D313E");
+    const Y = hexToBytes("690673766C3E848CAC7C05169FFB7B7751E52A011040E5602573FAF991044A004329EEF7BED8E6875830A91854D1BD2EDC6FC2FF37851DBAC249DF400A0549EA2E0C811D499E1FF1E5E32FAE7F0532FA4051D0F9E300D9B1DBF119AC8CFFC48DD3CBF1CA0DBA5DD97481C88DF0BE412785E40988B31585537948B80F5A9C49E08DD684A7DCA871C380DFDC4C4DFBE61F50D2D0FBD24D8B9D32974A347247D001BAD5B168440025693967E77394DC088B0ECCFA8D291BA13D44F60B06E2EDB351" + "cde5af6ef9a14b7d0c191b869a6343ed6a4e9aab4ee00a579e9e682d0ec051e3");
+
+    expect(prgAeEncrypt(256, 1, A, X, I, K)).toStrictEqual(Y)
+    expect(prgAeDecrypt(256, 1, A, Y, I, K)).toStrictEqual(X)
+})
+
+describe("PRG-HASH", () => {
+    const sBytes = hexToBytes(
+        "B194BAC80A08F53B366D008E584A5DE48504FA9D1BB6C7AC252E72C202FDCE0D" +
+        "5BE3D61217B96181FE6786AD716B890B5CB0C0FF33C356B835C405AED8E07F99" +
+        "E12BDC1AE28257EC703FCCF095EE8DF1C1AB76389FE678CAF7C6F860D5BB9C4F" +
+        "F33C657B637C306ADD4EA7799EB23D313E98B56E27D3BCCF591E181F4C5AB793" +
+        "E9DEE72C8F0C0FA62DDB49F46F73964706075316ED247A3739CBA38303A98BF6" +
+        "92BD9B1CE5D141015445FBC95E4D0EF2682080AA227D642F2687F93490405511"
+    );
+
+    test("l = 128, d = 2", () => {
+        const testCases = [{
+            m: 0,
+            expected: "36FA075EC15721F250B9A641A8CB99A333A9EE7BA8586D0646CBAC3686C03DF3"
+        },
+        {
+            m: 127,
+            expected: "C930FF427307420DA6E4182969AA1FFC3310179B8A0EDB3E20BEC285B568BA17"
+        },
+        {
+            m: 128,
+            expected: "92AD1402C2007191F2F7CFAD6A2F8807BB0C50F73DFF95EF1B8AF08504D54007"
+        },
+        {
+            m: 150,
+            expected: "48DB61832CA1009003BC0D8BDE67893A9DC683C48A5BC23AC884EB4613B480A6"
+        }]
+
+        for(let i of testCases) {
+            const X = sBytes.slice(0, i.m);
+            const Y = prgHash(128, 2, X)
+            expect(Y).toStrictEqual(hexToBytes(i.expected))
+        }
+    })
+
+    test("l = 192, d = 1", () => {
+        const testCases = [{
+            m: 143,
+            expected: "6166032D6713D401A6BC687CCFFF2E603287143A84C78D2C62C71551E0E2FB2AF6B799EE33B5DECD7F62F190B1FBB052"
+        },
+        {
+            m: 144,
+            expected: "8D84C82ECD0AB6468CC451CFC5EEB3B298DFD381D200DA69FBED5AE67D26BAD5C727E2652A225BF465993043039E338B"
+        },
+        {
+            m: 150,
+            expected: "47529F9D499AB6AB8AD72B1754C90C39E7DA237BEB16CDFC00FE87934F5AFC1101862DFA50560F062A4DAC859CC13DBC"
+        }]
+
+        for(let i of testCases) {
+            const X = sBytes.slice(0, i.m);
+            const Y = prgHash(192, 1, X)
+            expect(Y).toStrictEqual(hexToBytes(i.expected))
+        }
+    })
+})

@@ -1,6 +1,12 @@
 export const ROUNDS = 24;
 export const MASK64 = 0xFFFFFFFFFFFFFFFFn;
 
+export const BASH_PRG_NULL = 0x01;  // 000000 (NULL data)
+export const BASH_PRG_KEY  = 0x05;  // 000001 (KEY)
+export const BASH_PRG_DATA = 0x09;  // 000010 (DATA)
+export const BASH_PRG_TEXT = 0x0D;  // 000011 (TEXT)
+export const BASH_PRG_OUT  = 0x11;  // 000100 (OUT)
+
 export const bash_rc: Readonly<BigUint64Array> = new BigUint64Array([
     0x3bf5080ac8ba94b1n,
     0xc1d1659c1bbd92f6n,

@@ -12,7 +12,30 @@ export const uint64sToBytes = (w: BigUint64Array): Uint8Array => {
     return result;
 }
 
-// Code from `@noble/curves`
+export const xor = (a: Uint8Array, b: Uint8Array): Uint8Array => {
+    let mlen = Math.min(a.length, b.length);
+    let result = new Uint8Array(mlen);
+    for(let i = 0; i < mlen; i++) result[i] = a[i] ^ b[i];
+
+    return result.slice();
+}
+
+// Code from awesome projects `@noble/curves` and `@noble/hashes`
+
+export function concatBytes(...arrays: Uint8Array[]): Uint8Array {
+    let sum = 0;
+    for (let i = 0; i < arrays.length; i++) {
+        const a = arrays[i];
+        sum += a.length;
+    }
+    const res = new Uint8Array(sum);
+    for (let i = 0, pad = 0; i < arrays.length; i++) {
+        const a = arrays[i];
+        res.set(a, pad);
+        pad += a.length;
+    }
+    return res;
+}
 export function hexToNumber(hex: string): bigint {
     if (typeof hex !== 'string') throw new Error('hex string expected, got ' + typeof hex);
     return hex === '' ? 0n : BigInt('0x' + hex);
@@ -60,4 +83,11 @@ export function numberToBytesBE(n: number | bigint, len: number): Uint8Array {
 
 export function bytesToNumberBE(bytes: Uint8Array): bigint {
     return hexToNumber(bytesToHex(bytes));
+}
+
+export const equalBytes = (a: Uint8Array, b: Uint8Array): boolean => {
+    if (a.length !== b.length) return false;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+    return diff === 0;
 }

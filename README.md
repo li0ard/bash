@@ -27,6 +27,7 @@ bunx jsr i @li0ard/bash
 - [x] BASH.HASH128 (256 bit)
 - [x] BASH.HASH192 (384 bit)
 - [x] BASH.HASH256 (512 bit)
+- [x] Programmable automatons (bash-prg)
 
 ## Features
 - Provides simple and modern API

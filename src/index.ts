@@ -4,7 +4,8 @@ import { bytesToUint64s, uint64sToBytes } from "./utils";
 const _ROTHI_ = (x: bigint, y: bigint): bigint => ((x << y) | (x >> (64n - y))) & MASK64;
 const ROTHI = (x: bigint, y: bigint): bigint => (y < 64n && y > 0n) ? _ROTHI_(x, y) : x;
 
-const BASHS = (S: BigUint64Array, i0: number, i1: number, i2: number, m1: bigint, n1: bigint, m2: bigint, n2: bigint) => {
+/** `bash-s` algorithm */
+export const BASHS = (S: BigUint64Array, i0: number, i1: number, i2: number, m1: bigint, n1: bigint, m2: bigint, n2: bigint): void => {
     let T0, T1, T2: bigint;
 
     T0 = ROTHI(S[i0], m1);
@@ -56,7 +57,8 @@ const SWAP64 = (A: bigint) => {
     ) & MASK64;
 }
 
-const BASHF = (S: BigUint64Array, bigend: boolean) => {
+/** `bash-f` sponge function */
+export const BASHF = (S: BigUint64Array, bigend: boolean): void => {
     if (bigend) {
         for (let i = 0; i < ROUNDS; i++) S[i] = SWAP64(S[i]);
     }
@@ -177,3 +179,5 @@ export const bash384 = (input: Uint8Array): Uint8Array => new Bash(48).update(in
  * @param input Input bytes
  */
 export const bash512 = (input: Uint8Array): Uint8Array => new Bash(64).update(input).digest();
+
+export * from "./prg";
