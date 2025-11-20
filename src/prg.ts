@@ -1,6 +1,6 @@
-import { BASH_PRG_KEY, BASH_PRG_NULL, BASH_PRG_DATA, BASH_PRG_OUT, BASH_PRG_TEXT } from "./const";
-import { BASHF } from "./index";
-import { concatBytes, equalBytes, xor } from "./utils";
+import { BASH_PRG_KEY, BASH_PRG_NULL, BASH_PRG_DATA, BASH_PRG_OUT, BASH_PRG_TEXT } from "./const.js";
+import { BASHF } from "./bashf.js";
+import { concatBytes, equalBytes, xor } from "./utils.js";
 
 /** Programmable automaton (`bash-prg`) */
 export class BashPrg {

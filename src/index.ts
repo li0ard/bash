@@ -1,82 +1,5 @@
-import { bash_rc, bash_rot, ROUNDS, MASK64 } from "./const";
-import { bytesToUint64s, uint64sToBytes } from "./utils";
-
-const _ROTHI_ = (x: bigint, y: bigint): bigint => ((x << y) | (x >> (64n - y))) & MASK64;
-const ROTHI = (x: bigint, y: bigint): bigint => (y < 64n && y > 0n) ? _ROTHI_(x, y) : x;
-
-/** `bash-s` algorithm */
-export const BASHS = (S: BigUint64Array, i0: number, i1: number, i2: number, m1: bigint, n1: bigint, m2: bigint, n2: bigint): void => {
-    let T0, T1, T2: bigint;
-
-    T0 = ROTHI(S[i0], m1);
-    S[i0] = S[i0] ^ S[i1] ^ S[i2];
-    T1 = S[i1] ^ ROTHI(S[i0], n1);
-    S[i1] = T0 ^ T1;
-    S[i2] = S[i2] ^ ROTHI(S[i2], m2) ^ ROTHI(T1, n2);
-    T0 = S[i2] ^ MASK64;
-    T1 = S[i0] | S[i2];
-    T2 = S[i0] & S[i1];
-    T0 = T0 | S[i1];
-    S[i1] = S[i1] ^ T1;
-    S[i2] = S[i2] ^ T2;
-    S[i0] = S[i0] ^ T0;
-}
-
-const BASH_PERMUTE = (S: BigUint64Array) => {
-    const S_ = new BigUint64Array(S);
-    S[0] = S_[15];
-    S[1] = S_[10];
-    S[2] = S_[9];
-    S[3] = S_[12];
-    S[4] = S_[11];
-    S[5] = S_[14];
-    S[6] = S_[13];
-    S[7] = S_[8];
-    S[8] = S_[17];
-    S[9] = S_[16];
-    S[10] = S_[19];
-    S[11] = S_[18];
-    S[12] = S_[21];
-    S[13] = S_[20];
-    S[14] = S_[23];
-    S[15] = S_[22];
-    S[16] = S_[6];
-    S[17] = S_[3];
-    S[18] = S_[0];
-    S[19] = S_[5];
-    S[20] = S_[2];
-    S[21] = S_[7];
-    S[22] = S_[4];
-    S[23] = S_[1];
-}
-
-const SWAP64 = (A: bigint) => {
-    return (
-        (A << 56n) | ((A & 0xff00n) << 40n) | ((A & 0xff0000n) << 24n) | ((A & 0xff000000n) << 8n) |
-        ((A >> 8n) & 0xff000000n) | ((A >> 24n) & 0xff0000n) | ((A >> 40n) & 0xff00n) | (A >> 56n)
-    ) & MASK64;
-}
-
-/** `bash-f` sponge function */
-export const BASHF = (S: BigUint64Array, bigend: boolean): void => {
-    if (bigend) {
-        for (let i = 0; i < ROUNDS; i++) S[i] = SWAP64(S[i]);
-    }
-
-    for (let round = 0; round < ROUNDS; round++) {
-        for (let v = 0; v < 8; v++) BASHS(
-            S, v, v + 8, v + 16,
-            BigInt(bash_rot[v][0]), BigInt(bash_rot[v][1]), BigInt(bash_rot[v][2]), BigInt(bash_rot[v][3])
-        );
-
-        BASH_PERMUTE(S);
-        S[23] = S[23] ^ bash_rc[round];
-    }
-
-    if (bigend) {
-        for (let i = 0; i < ROUNDS; i++) S[i] = SWAP64(S[i]);
-    }
-}
+import { BASHF } from "./bashf.js";
+import { bytesToUint64s, uint64sToBytes } from "./utils.js";
 
 /** Bash (aka STB 34.101.77) algorithm */
 export class Bash {
@@ -96,7 +19,7 @@ export class Bash {
      */
     constructor(public readonly outputLen: number) {
         if(outputLen != 32 && outputLen != 48 && outputLen != 64) throw new Error("Invalid size");
-        this.blockLen = 192 - (2 * this.outputLen);
+        this.blockLen = 192 - (outputLen / 2);
         this.reset();
     }
 
@@ -149,11 +72,24 @@ export class Bash {
     public digest(): Uint8Array { return this.clone().final(); }
 
     private final() {
-        const x2 = new Uint8Array(this.x);
+        /*const x2 = new Uint8Array(this.x);
         x2.fill(0, this.nx, this.blockLen);
         x2[this.nx] = 0x40;
         this.processBlock(x2);
     
+        return uint64sToBytes(this.s).slice(0, this.outputLen);*/
+        const x2 = new Uint8Array(this.x);
+    
+        if (this.nx === this.blockLen) {
+            this.processBlock(x2);
+            x2.fill(0);
+            x2[0] = 0x40;
+        } else {
+            x2.fill(0, this.nx, this.blockLen);
+            x2[this.nx] = 0x40;
+        }
+    
+        this.processBlock(x2);
         return uint64sToBytes(this.s).slice(0, this.outputLen);
     }
 
@@ -180,4 +116,5 @@ export const bash384 = (input: Uint8Array): Uint8Array => new Bash(48).update(in
  */
 export const bash512 = (input: Uint8Array): Uint8Array => new Bash(64).update(input).digest();
 
-export * from "./prg";
+export * from "./prg.js";
+export * from "./bashf.js";

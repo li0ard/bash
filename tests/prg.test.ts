@@ -95,4 +95,28 @@ describe("PRG-HASH", () => {
             expect(Y).toStrictEqual(hexToBytes(i.expected))
         }
     })
+
+    test("l = 256, d = 1/2", () => {
+        const testCases = [{
+            m: 0,
+            d: 2,
+            expected: "5FBDF97C622FBB36F5EE30639C03EF2600105578613401D8C0877BF38E726845E153094492D13865CD9527E6B42E2FFA590EE19DB971C32749A3386D3EC5263B"
+        },
+        {
+            m: 127,
+            d: 2,
+            expected: "6326B650058B5954C799BF76810A0E6E1DD0900BFA04C2D527CC64CD7CE208BA4C7893EAACDC503EF27A5BB052EB10116E29BA80BCA023FB28C7808411411865"
+        },
+        {
+            m: 143,
+            d: 1,
+            expected: "9E5CBDD50DDC71E37482784AAB3BBC1D5E7DC3DF4D2018642BB98A9583BCF2883B06CCDF5D201C86CC0564660614CE3CED90E53C4B2B87B23C0B60994FEFE9D6"
+        }]
+
+        for(let i of testCases) {
+            const X = sBytes.slice(0, i.m);
+            const Y = prgHash(256, i.d, X)
+            expect(Y).toStrictEqual(hexToBytes(i.expected))
+        }
+    })
 })
