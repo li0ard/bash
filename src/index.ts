@@ -1,5 +1,5 @@
 import { BASHF } from "./bashf.js";
-import { bytesToUint64s, uint64sToBytes } from "./utils.js";
+import { bytesToUint64s, uint64sToBytes, type TArg, type TRet } from "./utils.js";
 
 /** Bash (aka STB 34.101.77) algorithm */
 export class Bash {
@@ -36,7 +36,7 @@ export class Bash {
     }
 
     /** Update hash buffer */
-    public update(p: Uint8Array): Bash {
+    public update(p: TArg<Uint8Array>): this {
         let nn = p.length;
         this.len += BigInt(nn);
         let plen = p.length;
@@ -69,9 +69,9 @@ export class Bash {
     public clone(): Bash { return this._cloneInto(); }
 
     /** Finalize hash computation and return result as Uint8Array */
-    public digest(): Uint8Array { return this.clone().final(); }
+    public digest(): TRet<Uint8Array> { return this.clone().final(); }
 
-    private final() {
+    private final(): TRet<Uint8Array> {
         /*const x2 = new Uint8Array(this.x);
         x2.fill(0, this.nx, this.blockLen);
         x2[this.nx] = 0x40;
@@ -93,7 +93,7 @@ export class Bash {
         return uint64sToBytes(this.s).slice(0, this.outputLen);
     }
 
-    private processBlock(data: Uint8Array) {
+    private processBlock(data: TArg<Uint8Array>) {
         let state = bytesToUint64s(data);
         for (let i = 0; i < this.s.length; i++) this.s[i] ^= state[i];
         BASHF(this.s, true);
@@ -104,17 +104,17 @@ export class Bash {
  * Compute hash with STB 34.101.77 256 bit (aka BASH.HASH128)
  * @param input Input bytes
  */
-export const bash256 = (input: Uint8Array): Uint8Array => new Bash(32).update(input).digest();
+export const bash256 = (input: TArg<Uint8Array>): TRet<Uint8Array> => new Bash(32).update(input).digest();
 /**
  * Compute hash with STB 34.101.77 384 bit (aka BASH.HASH192)
  * @param input Input bytes
  */
-export const bash384 = (input: Uint8Array): Uint8Array => new Bash(48).update(input).digest();
+export const bash384 = (input: TArg<Uint8Array>): TRet<Uint8Array> => new Bash(48).update(input).digest();
 /**
  * Compute hash with STB 34.101.77 512 bit (aka BASH.HASH256)
  * @param input Input bytes
  */
-export const bash512 = (input: Uint8Array): Uint8Array => new Bash(64).update(input).digest();
+export const bash512 = (input: TArg<Uint8Array>): TRet<Uint8Array> => new Bash(64).update(input).digest();
 
 export * from "./prg.js";
 export * from "./bashf.js";

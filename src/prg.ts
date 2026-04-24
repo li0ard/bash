@@ -1,6 +1,6 @@
 import { BASH_PRG_KEY, BASH_PRG_NULL, BASH_PRG_DATA, BASH_PRG_OUT, BASH_PRG_TEXT } from "./const.js";
 import { BASHF } from "./bashf.js";
-import { concatBytes, equalBytes, xor } from "./utils.js";
+import { concatBytes, equalBytes, xor, type TArg, type TRet } from "./utils.js";
 
 /** Programmable automaton (`bash-prg`) */
 export class BashPrg {
@@ -38,7 +38,7 @@ export class BashPrg {
      * @param ann Announcement
      * @param key Encryption key
      */
-    start(l: number, d: number, ann: Uint8Array, key: Uint8Array) {
+    start(l: number, d: number, ann: TArg<Uint8Array>, key: TArg<Uint8Array>) {
         if (![128, 192, 256].includes(l)) throw new Error('Invalid security level. Must be 128, 192, or 256.');
         if (![1, 2].includes(d)) throw new Error('Invalid capacity. Must be 1 or 2.');
         if (ann.length % 4 !== 0 || ann.length > 60) throw new Error('Invalid announcement length. Must be multiple of 4 and ≤ 60.');
@@ -61,7 +61,7 @@ export class BashPrg {
      * @param ann Announcement
      * @param key Encryption key
      */
-    restart(ann: Uint8Array, key: Uint8Array) {
+    restart(ann: TArg<Uint8Array>, key: TArg<Uint8Array>) {
         if (ann.length % 4 !== 0 || ann.length > 60) throw new Error('Invalid announcement length. Must be multiple of 4 and ≤ 60.');
         if (key.length % 4 !== 0 || key.length > 60) throw new Error('Invalid key length. Must be multiple of 4 and ≤ 60.');
         if (key.length > 0 && key.length < Math.floor(this.l / 8)) throw new Error(`Key length too short. Must be ≥ ${Math.floor(this.l/8)} bytes.`);
@@ -82,7 +82,7 @@ export class BashPrg {
      * Load data
      * @param buf Input data
      */
-    absorb(buf: Uint8Array) {
+    absorb(buf: TArg<Uint8Array>) {
         let count = buf.length;
         this.commit(BASH_PRG_DATA);
         let offset = 0;
@@ -119,7 +119,7 @@ export class BashPrg {
      * Extract data
      * @param count Count of bytes
      */
-    squeeze(count: number): Uint8Array {
+    squeeze(count: number): TRet<Uint8Array> {
         this.commit(BASH_PRG_OUT);
         const result = new Uint8Array(count);
         let offset = 0;
@@ -158,7 +158,7 @@ export class BashPrg {
      * Encrypt data
      * @param buf Data to be encrypted
      */
-    encrypt(buf: Uint8Array): Uint8Array {
+    encrypt(buf: TArg<Uint8Array>): TRet<Uint8Array> {
         let count = buf.length;
         if (!this.isKeymode()) throw new Error('Encryption requires key mode. Initialize with a key.');
         
@@ -205,7 +205,7 @@ export class BashPrg {
      * Decrypt data
      * @param buf Data to be decryptedk
      */
-    decrypt(buf: Uint8Array): Uint8Array {
+    decrypt(buf: TArg<Uint8Array>): TRet<Uint8Array> {
         let count = buf.length;
         if (!this.isKeymode()) throw new Error('Decryption requires key mode. Initialize with a key.');
         
@@ -267,15 +267,15 @@ export class BashPrg {
     /** Clone instance */
     clone(): BashPrg { return this._cloneInto(); }
 
-    private xorWithState(src: Uint8Array, srcOffset: number, destOffset: number, length: number): void {
+    private xorWithState(src: TArg<Uint8Array>, srcOffset: number, destOffset: number, length: number): void {
         for (let i = 0; i < length; i++) this.s[destOffset + i] ^= src[srcOffset + i];
     }
 
-    private copyFromState(dest: Uint8Array, destOffset: number, srcOffset: number, length: number): void {
+    private copyFromState(dest: TArg<Uint8Array>, destOffset: number, srcOffset: number, length: number): void {
         for (let i = 0; i < length; i++) dest[destOffset + i] = this.s[srcOffset + i];
     }
     
-    private bashF(state: Uint8Array): void {
+    private bashF(state: TArg<Uint8Array>): void {
         BASHF(new BigUint64Array(state.buffer, state.byteOffset), false);
     }
 }
@@ -286,7 +286,7 @@ export class BashPrg {
  * @param d Capacity (1 or 2)
  * @param X Data to be hashed
  */
-export const prgHash = (l: number, d: number, X: Uint8Array): Uint8Array => {
+export const prgHash = (l: number, d: number, X: TArg<Uint8Array>): TRet<Uint8Array> => {
     const alpha = new BashPrg();
     const n = l / 4;
     alpha.start(l, d, new Uint8Array(), new Uint8Array());
@@ -304,7 +304,10 @@ export const prgHash = (l: number, d: number, X: Uint8Array): Uint8Array => {
  * @param I Associated Data
  * @param K Encryption key
  */
-export const prgAeEncrypt = (l: number, d: number, A: Uint8Array, X: Uint8Array, I: Uint8Array, K: Uint8Array): Uint8Array => {
+export const prgAeEncrypt = (
+    l: number, d: number,
+    A: TArg<Uint8Array>, X: TArg<Uint8Array>, I: TArg<Uint8Array>, K: TArg<Uint8Array>
+): TRet<Uint8Array> => {
     const alpha = new BashPrg();
     alpha.start(l, d, A, K);
     alpha.absorb(I);
@@ -321,7 +324,10 @@ export const prgAeEncrypt = (l: number, d: number, A: Uint8Array, X: Uint8Array,
  * @param I Associated Data
  * @param K Encryption key
  */
-export const prgAeDecrypt = (l: number, d: number, A: Uint8Array, Y: Uint8Array, I: Uint8Array, K: Uint8Array): Uint8Array => {
+export const prgAeDecrypt = (
+    l: number, d: number,
+    A: TArg<Uint8Array>, Y: TArg<Uint8Array>, I: TArg<Uint8Array>, K: TArg<Uint8Array>
+): TRet<Uint8Array> => {
     const alpha = new BashPrg();
     alpha.start(l, d, A, K);
     alpha.absorb(I);

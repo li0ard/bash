@@ -1,10 +1,16 @@
 import { MASK64, bash_rot, bash_rc } from "./const.js";
+import type { TArg } from "./utils.js";
 
 const _ROTHI_ = (x: bigint, y: bigint): bigint => ((x << y) | (x >> (64n - y))) & MASK64;
 const ROTHI = (x: bigint, y: bigint): bigint => (y < 64n && y > 0n) ? _ROTHI_(x, y) : x;
 
 /** `bash-s` algorithm */
-export const BASHS = (S: BigUint64Array, i0: number, i1: number, i2: number, m1: bigint, n1: bigint, m2: bigint, n2: bigint): void => {
+export const BASHS = (
+    S: TArg<BigUint64Array>,
+    i0: number, i1: number, i2: number,
+    m1: bigint, n1: bigint,
+    m2: bigint, n2: bigint
+): void => {
     let T0, T1, T2: bigint;
 
     T0 = ROTHI(S[i0], m1);
@@ -21,7 +27,7 @@ export const BASHS = (S: BigUint64Array, i0: number, i1: number, i2: number, m1:
     S[i0] = S[i0] ^ T0;
 }
 
-const BASH_PERMUTE = (S: BigUint64Array) => {
+const BASH_PERMUTE = (S: TArg<BigUint64Array>) => {
     const S_ = new BigUint64Array(S);
     S[0] = S_[15]; S[1] = S_[10]; S[2] = S_[9]; S[3] = S_[12]; S[4] = S_[11]; S[5] = S_[14];
     S[6] = S_[13]; S[7] = S_[8]; S[8] = S_[17]; S[9] = S_[16]; S[10] = S_[19]; S[11] = S_[18];
@@ -29,7 +35,7 @@ const BASH_PERMUTE = (S: BigUint64Array) => {
     S[18] = S_[0]; S[19] = S_[5]; S[20] = S_[2]; S[21] = S_[7]; S[22] = S_[4]; S[23] = S_[1];
 }
 
-const SWAP64 = (A: bigint) => {
+const SWAP64 = (A: bigint): bigint => {
     return (
         (A << 56n) | ((A & 0xff00n) << 40n) | ((A & 0xff0000n) << 24n) | ((A & 0xff000000n) << 8n) |
         ((A >> 8n) & 0xff000000n) | ((A >> 24n) & 0xff0000n) | ((A >> 40n) & 0xff00n) | (A >> 56n)
@@ -37,7 +43,7 @@ const SWAP64 = (A: bigint) => {
 }
 
 /** `bash-f` sponge function */
-export const BASHF = (S: BigUint64Array, bigend: boolean): void => {
+export const BASHF = (S: TArg<BigUint64Array>, bigend: boolean): void => {
     /*if (bigend) {
         for (let i = 0; i < 24; i++) S[i] = SWAP64(S[i]);
     }

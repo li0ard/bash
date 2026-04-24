@@ -24,10 +24,10 @@ test("PRG", () => {
     const gamma = beta.clone();
     gamma.restart(A2, new Uint8Array(0));
 
-    expect(K1).toStrictEqual(expectedK1)
-    expect(beta.encrypt(X)).toStrictEqual(expectedY1)
-    expect(gamma.encrypt(X)).toStrictEqual(expectedY2)
-})
+    expect(K1).toStrictEqual(expectedK1);
+    expect(beta.encrypt(X)).toStrictEqual(expectedY1);
+    expect(gamma.encrypt(X)).toStrictEqual(expectedY2);
+});
 
 test("PRG-AE", () => {
     const A = hexToBytes("B194BAC80A08F53B366D008E584A5DE4");
@@ -36,9 +36,9 @@ test("PRG-AE", () => {
     const I = hexToBytes("E12BDC1AE28257EC703FCCF095EE8DF1C1AB76389FE678CAF7C6F860D5BB9C4FF33C657B637C306ADD4EA7799EB23D313E");
     const Y = hexToBytes("690673766C3E848CAC7C05169FFB7B7751E52A011040E5602573FAF991044A004329EEF7BED8E6875830A91854D1BD2EDC6FC2FF37851DBAC249DF400A0549EA2E0C811D499E1FF1E5E32FAE7F0532FA4051D0F9E300D9B1DBF119AC8CFFC48DD3CBF1CA0DBA5DD97481C88DF0BE412785E40988B31585537948B80F5A9C49E08DD684A7DCA871C380DFDC4C4DFBE61F50D2D0FBD24D8B9D32974A347247D001BAD5B168440025693967E77394DC088B0ECCFA8D291BA13D44F60B06E2EDB351" + "cde5af6ef9a14b7d0c191b869a6343ed6a4e9aab4ee00a579e9e682d0ec051e3");
 
-    expect(prgAeEncrypt(256, 1, A, X, I, K)).toStrictEqual(Y)
-    expect(prgAeDecrypt(256, 1, A, Y, I, K)).toStrictEqual(X)
-})
+    expect(prgAeEncrypt(256, 1, A, X, I, K)).toStrictEqual(Y);
+    expect(prgAeDecrypt(256, 1, A, Y, I, K)).toStrictEqual(X);
+});
 
 describe("PRG-HASH", () => {
     const sBytes = hexToBytes(
@@ -66,14 +66,14 @@ describe("PRG-HASH", () => {
         {
             m: 150,
             expected: "48DB61832CA1009003BC0D8BDE67893A9DC683C48A5BC23AC884EB4613B480A6"
-        }]
+        }];
 
         for(let i of testCases) {
             const X = sBytes.slice(0, i.m);
-            const Y = prgHash(128, 2, X)
-            expect(Y).toStrictEqual(hexToBytes(i.expected))
+            const Y = prgHash(128, 2, X);
+            expect(Y).toStrictEqual(hexToBytes(i.expected));
         }
-    })
+    });
 
     test("l = 192, d = 1", () => {
         const testCases = [{
@@ -87,14 +87,14 @@ describe("PRG-HASH", () => {
         {
             m: 150,
             expected: "47529F9D499AB6AB8AD72B1754C90C39E7DA237BEB16CDFC00FE87934F5AFC1101862DFA50560F062A4DAC859CC13DBC"
-        }]
+        }];
 
         for(let i of testCases) {
             const X = sBytes.slice(0, i.m);
-            const Y = prgHash(192, 1, X)
-            expect(Y).toStrictEqual(hexToBytes(i.expected))
+            const Y = prgHash(192, 1, X);
+            expect(Y).toStrictEqual(hexToBytes(i.expected));
         }
-    })
+    });
 
     test("l = 256, d = 1/2", () => {
         const testCases = [{
@@ -111,12 +111,12 @@ describe("PRG-HASH", () => {
             m: 143,
             d: 1,
             expected: "9E5CBDD50DDC71E37482784AAB3BBC1D5E7DC3DF4D2018642BB98A9583BCF2883B06CCDF5D201C86CC0564660614CE3CED90E53C4B2B87B23C0B60994FEFE9D6"
-        }]
+        }];
 
         for(let i of testCases) {
             const X = sBytes.slice(0, i.m);
-            const Y = prgHash(256, i.d, X)
-            expect(Y).toStrictEqual(hexToBytes(i.expected))
+            const Y = prgHash(256, i.d, X);
+            expect(Y).toStrictEqual(hexToBytes(i.expected));
         }
-    })
-})
+    });
+});
