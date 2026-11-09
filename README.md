@@ -13,6 +13,9 @@
     <hr>
 </p>
 
+> [!IMPORTANT]  
+> This repository is archived. All STB implementations moved to [`@li0ard/stb`](https://github.com/li0ard/stb)
+
 ## Installation
 
 ```bash
